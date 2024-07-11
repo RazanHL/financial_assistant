@@ -58,8 +58,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 load_dotenv()
-# os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
-os.environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
            
 st.header("Your Financial Assistance")
 st.subheader("General information about the dataset")
@@ -147,19 +146,6 @@ llm = HuggingFaceEndpoint(
     huggingfacehub_api_token=os.environ["HUGGINGFACEHUB_API_TOKEN"],
 )
 
-# # Initialise a session state variable
-# if 'clicked' not in st.session_state:
-#     st.session_state.clicked = {1: False}
-
-# # Function to update the value in session state
-# def clicked(button):
-#     st.session_state.clicked[button] = True
-
-# # Button with callback function
-# if st.button("Let's get started", on_click=clicked, args=[1]):
-#     # Action to perform when the button is clicked 
-#     st.text_input('hi')
-
 st.divider()
 tab1, tab2, tab3, tab4 = st.tabs(["Financial Assistant", "ChatBot", "General overview", "Predictors"])
 
@@ -186,71 +172,11 @@ with tab1:
     except:
         db = preparing_db()
 
-    # def get_conversation_string():
-    #     conversation_string = ""
-    #     for i in range(len(st.session_state['responses'])-1):        
-    #         conversation_string += "Human: "+st.session_state['requests'][i] + "\n"
-    #         conversation_string += "Bot: "+ st.session_state['responses'][i+1] + "\n"
-    #     return conversation_string
-
-    # def find_match(input):
-    #     # input_em = embedder.encode(input).tolist()
-    #     result = db.search(input, search_type='similarity') # top_k=2, includeMetadata=True)
-    #     return result #['matches'][0]['metadata']['text']+"\n"+result['matches'][1]['metadata']['text']
-
-
     if 'responses' not in st.session_state:
         st.session_state['responses'] = ["How can I assist you?"]
 
     if 'requests' not in st.session_state:
         st.session_state['requests'] = []
-
-
-    # # remember the last 3 conversations:
-    # if 'buffer_memory' not in st.session_state:
-    #     st.session_state.buffer_memory=ConversationBufferWindowMemory(k=3,return_messages=True)
-    
-    # if 'responses2' not in st.session_state:
-    #     st.session_state['responses2'] = ["How can I assist you?"]
-
-    # if 'llm_buffer_memory' not in st.session_state:
-    #     st.session_state.llm_buffer_memory=ConversationBufferWindowMemory(k=3,return_messages=True)
-
-    # system_msg_template = SystemMessagePromptTemplate.from_template(template="""Answer the question as truthfully as possible using the provided context, 
-    # and if the answer is not contained within the text below, say 'I don't know'""")
-    # human_msg_template = HumanMessagePromptTemplate.from_template(template="{input}")
-    # prompt_template = ChatPromptTemplate.from_messages([system_msg_template, MessagesPlaceholder(variable_name="history"), human_msg_template])
-
-
-    # conversation = ConversationalRetrievalChain.from_llm(
-    #     llm, 
-    #     retriever,
-    #     return_source_documents=True,
-    #     chain_type= "stuff" #"retrieval_qa"  # or "conversational_retrieval"
-    #     )
-
-    # response_container = st.container()
-    # textcontainer = st.container()
-
-    # with textcontainer:
-    #     query = st.text_input("Hello! How can I help you? ", key="input")
-    #     if query:
-    #         with st.spinner("thinking..."):
-    #             chat_history = []
-    #             res = conversation({"question": query, "chat_history": chat_history})
-
-    #             response = res['answer']
-    #             chat_history.append((query, res["answer"]))
-    #             # response = conversation.predict(input= query) #f"Context:\n {context} \n\n Query:\n{query}")
-    #             st.session_state.requests.append(query)
-    #             st.session_state.responses.append(response)
-
-    # with response_container:
-    #     if st.session_state['responses']:
-    #         for i in range(len(st.session_state['responses'])):
-    #             message(st.session_state['responses'][i],key=str(i))
-    #             if i < len(st.session_state['requests']):
-    #                 message(st.session_state["requests"][i], is_user=True,key=str(i)+ '_user')
 
     contextualize_q_system_prompt = (
         "Given a chat history and the latest user question "
@@ -304,16 +230,6 @@ with tab1:
         history_messages_key="chat_history",
         output_messages_key="answer",
     )
-    # result = conversational_rag_chain.invoke(
-    #         {"input": " what is AFFIRMATIVE ACTION PLAN AND REPORT report talking about?"},
-    #         config={
-    #             "configurable": {"session_id": "abc123"}
-    #         },  # constructs a key "abc123" in `store`.
-    #     )
-    # answer = result['answer']
-    # st.write(f'the answer is : {answer}')
-    # resource = result['context'][0]
-    # st.write(f'the resource is : {resource}')
 
     response_container = st.container()
     textcontainer = st.container()
@@ -339,55 +255,8 @@ with tab1:
                 if i < len(st.session_state['requests']):
                     message(st.session_state["requests"][i], is_user=True,key=str(i)+ '_user')
 
-
-
-
-    # qa = ConversationalRetrievalChain.from_llm(llm, retriever)
-    # question = "give me a financial sammary"
-    # chat_history = []
-    # response = qa({"question": question, "chat_history": chat_history})
-    # st.subheader('here is the testtttt')
-    # st.write(response['answer'])
-
-    # question = "is there a need for legal assistance according to the recent situation"
-    # response = qa({"question": question, "chat_history": chat_history})
-    # st.subheader('here is the next test')
-    # st.write(response['answer'])
-
-
-    # # Incorporate the retriever into a question-answering chain.
-    # system_prompt = (
-    #     "You are a financial assistant for question-answering tasks. "
-    #     "Use the following pieces of retrieved context to answer the question. "
-    #     "If you don't know the answer, say that you don't know. "
-    #     "Use five sentences maximum and keep the answer concise."
-    #     "\n\n"
-    #     "{context}"
-    # )
-
-    # prompt = ChatPromptTemplate.from_messages(
-    #     [
-    #         ("system", system_prompt),
-    #         ("human", "{input}"),
-    #     ]
-    # )
-
-    # question_answer_chain = create_stuff_documents_chain(llm, prompt)
-    # rag_chain = create_retrieval_chain(retriever, question_answer_chain)
-    
-
-
-
-
-
-
-
 with tab2:
     st.header('Chat with the LLM')
-    # query2 = st.text_input('Add your question ..')
-    # if query2 is not None and query2 != '':
-    #     st.write(llm(query2))
-
     
     if 'responses2' not in st.session_state:
         st.session_state['responses2'] = ["How can I assist you?"]
@@ -434,10 +303,6 @@ with tab3:
         with st.spinner('Plotting Candlestick Chart ...'):
             fin_tools.creat_candle_chart(symbol)
 
-        # with st.expander("**See resent news about this stock market**"):
-        #     st.write(fin_tools.get_recent_stock_news(symbol))
-        #     # st.write(fin_tools.DuckDuck_search(str(symbol) + ' financial and trend news'))
-
 with tab4:
     st.header('Prediction of future prices')
     st.subheader('**Arima model forcasting:**')
@@ -461,43 +326,6 @@ with tab4:
     with st.spinner('Predictind Futher stock price ..'):
             fin_tools.predict_future_prices(model, df, scaler, days=d)
     
-
-    # st.subheader('**Predict stock prices in the future**')
-    # st.text_input('price after ____ days')
-    # df = fin_tools.get_recent_data(symbol)
-    # with st.spinner('Training Prediction model ....'):
-    #     model, scaler, rmse = fin_tools.lstm_creation(df)
-    #     ddff = fin_tools.predict_future_prices(model, df, scaler, 100 )
-    #     st.dataframe(ddff)
-
-    
-
-# query = st.text_input('ask anything about the market ..')
-# if query is not None and query !="":
-#     response = llm(str(query))
-#     st.write(response)
-
-
-# if st.button('Submit'):
-#     if query:
-#         with st.spinner('Processing...'):
-#             # Simulate a long-running process
-#             time.sleep(3)  # Simulate a process that takes 3 seconds
-#         st.success(f'Processing complete! You entered: {query}')
-#     else:
-#         st.error('Please enter some text before submitting.')
-
-
-# current_time = datetime.now()
-# end_date = str(datetime.now().date()+ timedelta(days=10))
-# start = current_time - timedelta(days=100)
-# start_date = str(start.date())
-# latest_data = yf.download(company_name, start=start_date, end=end_date)
-
-
-# st.bar_chart(data[['Net Income From Continuing Operation Net Minority Interest', 'EBITDA', 'EBIT', 'Basic EPS']])
-# st.line_chart(data[['Net Income From Continuing Operation Net Minority Interest', 'EBITDA', 'EBIT', 'Basic EPS']])
-
 # Making tool list
 
 tools=[

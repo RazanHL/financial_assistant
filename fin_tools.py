@@ -56,54 +56,62 @@ def basic_info(symbol):
 
     # plot some important features
     stock = get_stock(symbol)
-    cashflow_features = ['Operating Cash Flow', 'Capital Expenditure', 'Free Cash Flow', 'Investing Cash Flow', 
-                        'Cash Flow From Continuing Financing Activities', 'Net Long Term Debt Issuance']
-    cashflow_available_features = []
-    for feat in cashflow_features:
-        if feat in stock.quarterly_cashflow.index:
-            cashflow_available_features.append(feat)
+    col11, col22, col33 = st.columns(3)
+
+    with col11:
+        st.write('**Quarterly cashflow**')
+        cashflow_features = ['Operating Cash Flow', 'Capital Expenditure', 'Free Cash Flow', 'Investing Cash Flow', 
+                            'Cash Flow From Continuing Financing Activities', 'Net Long Term Debt Issuance']
+        cashflow_available_features = []
+        for feat in cashflow_features:
+            if feat in stock.quarterly_cashflow.index:
+                cashflow_available_features.append(feat)
 
 
-    # st.line_chart(stock.quarterly_cashflow.loc[cashflow_available_features].T)
-    fig, axs = plt.subplots(figsize=(10, 10))
-    for feat in cashflow_available_features:
-        axs.plot(stock.quarterly_cashflow.loc[feat], label=feat)
+        # st.line_chart(stock.quarterly_cashflow.loc[cashflow_available_features].T)
+        fig, axs = plt.subplots(figsize=(10, 10))
+        for feat in cashflow_available_features:
+            axs.plot(stock.quarterly_cashflow.loc[feat], label=feat)
 
-    plt.ylabel('Quarterly cashflow x100 billions')
-    plt.title('Quarterly Cashflow')
-    plt.legend()
-    st.pyplot(fig)
+        plt.ylabel('Quarterly cashflow x100 billions')
+        plt.title('Quarterly Cashflow')
+        plt.legend()
+        st.pyplot(fig)
 
-    balance_sheet_features = ['Total Assets', 'Total Liabilities Net Minority Interest', 'Stockholders Equity', 
-                            'Current Liabilities', 'Working Capital', 'Long Term Debt', 'Total Revenue']
-    balance_sheet_available_features = []
-    for feat in balance_sheet_features:
-        if feat in stock.quarterly_balance_sheet.index:
-            balance_sheet_available_features.append(feat)
-    fig, axs = plt.subplots(figsize=(10, 10))
-    for feat in balance_sheet_available_features:
-        axs.plot(stock.quarterly_balance_sheet.loc[feat], label=feat)
-    plt.ylabel('Balance Sheet x100 billions')
-    plt.title('Balance Sheet')
-    plt.legend()
-    st.pyplot(fig)
+    with col22:
+        st.write('**Quarterly balance sheet**')
+        balance_sheet_features = ['Total Assets', 'Total Liabilities Net Minority Interest', 'Stockholders Equity', 
+                                'Current Liabilities', 'Working Capital', 'Long Term Debt', 'Total Revenue']
+        balance_sheet_available_features = []
+        for feat in balance_sheet_features:
+            if feat in stock.quarterly_balance_sheet.index:
+                balance_sheet_available_features.append(feat)
+        fig, axs = plt.subplots(figsize=(10, 10))
+        for feat in balance_sheet_available_features:
+            axs.plot(stock.quarterly_balance_sheet.loc[feat], label=feat)
+        plt.ylabel('Balance Sheet x100 billions')
+        plt.title('Balance Sheet')
+        plt.legend()
+        st.pyplot(fig)
 
-    financials_features = ['EBIT', 'Net Income', 'Gross Profit', 'Basic EPS', 'Earnings From Equity Interest Net Of Tax']
-    financials_available_features = []
-    for feat in financials_features:
-        if feat in stock.quarterly_financials.index:
-            financials_available_features.append(feat)
-    fig, axs = plt.subplots(figsize=(10, 10))
-    for feat in financials_available_features:
-        axs.plot(stock.quarterly_financials.loc[feat], label=feat)
+    with col33:
+        st.write('**Quarterly financials**')
+        financials_features = ['EBIT', 'Net Income', 'Gross Profit', 'Basic EPS', 'Earnings From Equity Interest Net Of Tax']
+        financials_available_features = []
+        for feat in financials_features:
+            if feat in stock.quarterly_financials.index:
+                financials_available_features.append(feat)
+        fig, axs = plt.subplots(figsize=(10, 10))
+        for feat in financials_available_features:
+            axs.plot(stock.quarterly_financials.loc[feat], label=feat)
 
-    plt.ylabel('Financials x100 billions')
-    plt.title('Financials')
+        plt.ylabel('Financials x100 billions')
+        plt.title('Financials')
 
-    plt.xticks(rotation=45)
-    plt.yticks(rotation=45)
-    plt.legend()
-    st.pyplot(fig)
+        plt.xticks(rotation=45)
+        plt.yticks(rotation=45)
+        plt.legend()
+        st.pyplot(fig)
 
     return
 
