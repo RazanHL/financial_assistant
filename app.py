@@ -6,24 +6,24 @@ import pandas as pd
 from langchain_huggingface import HuggingFaceEndpoint
 
 # from langchain.agents import create_react_agent
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 import os
 # from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
 # from langchain.agents import AgentType, Tool, initialize_agent
 
-from langchain_community.agent_toolkits.load_tools import load_tools
+# from langchain_community.agent_toolkits.load_tools import load_tools
 
 # from datetime import datetime, timedelta
 import fin_tools
 
 # from langchain.prompts import PromptTemplate
 # from langchain.chains import LLMChain, SimpleSequentialChain, SequentialChain
-from langchain_experimental.agents.agent_toolkits import create_python_agent
+# from langchain_experimental.agents.agent_toolkits import create_python_agent
 # from langchain_experimental.tools import PythonREPLTool
 from langchain_experimental.utilities import PythonREPL
 
-from langchain.agents.agent_types import AgentType
+# from langchain.agents.agent_types import AgentType
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -324,50 +324,50 @@ with tab4:
     
 # Making tool list
 
-tools=[
-    # Tool(
-    #     name="get stock price prediction",
-    #     func=fin_tools.predict_stock_prices,
-    #     description="Use when you are asked to predict the price of stock. This will output predicted stock price. You should input the company name to it "
-    # ),
-    Tool(
-        name="get stock data",
-        func=fin_tools.get_recent_data,
-        description="Use when you are asked to evaluate or analyze a stock. This will output historic share price data. You should input the stock ticker to it "
-    ),
-    Tool(
-        name="DuckDuckGo Search",
-        func=fin_tools.DuckDuck_search.run,
-        description="Use only when you need to get NSE/BSE stock ticker from internet, you can also get recent stock related news. Dont use it for any other analysis or task"
-    ),
-    Tool(
-        name="get recent news",
-        func=fin_tools.get_recent_stock_news,
-        description="Use this to fetch recent news about stocks"
-    ),
+# tools=[
+#     # Tool(
+#     #     name="get stock price prediction",
+#     #     func=fin_tools.predict_stock_prices,
+#     #     description="Use when you are asked to predict the price of stock. This will output predicted stock price. You should input the company name to it "
+#     # ),
+#     Tool(
+#         name="get stock data",
+#         func=fin_tools.get_recent_data,
+#         description="Use when you are asked to evaluate or analyze a stock. This will output historic share price data. You should input the stock ticker to it "
+#     ),
+#     Tool(
+#         name="DuckDuckGo Search",
+#         func=fin_tools.DuckDuck_search.run,
+#         description="Use only when you need to get NSE/BSE stock ticker from internet, you can also get recent stock related news. Dont use it for any other analysis or task"
+#     ),
+#     Tool(
+#         name="get recent news",
+#         func=fin_tools.get_recent_stock_news,
+#         description="Use this to fetch recent news about stocks"
+#     ),
 
-    # Tool(
-    #     name="get financial statements",
-    #     func=fin_tools.get_financial_statements,
-    #     description="Use this to get financial statement of the company. With the help of this data companys historic performance can be evaluaated. You should input stock ticker to it"
-    # )
+#     # Tool(
+#     #     name="get financial statements",
+#     #     func=fin_tools.get_financial_statements,
+#     #     description="Use this to get financial statement of the company. With the help of this data companys historic performance can be evaluaated. You should input stock ticker to it"
+#     # )
 
 
-]
+# ]
 
-python_repl = PythonREPL()
+# python_repl = PythonREPL()
 
-@st.cache_resource
-def python_agent():
-    agent_executor = create_python_agent(
-        llm=llm,
-        tool=[python_repl],
-        verbose=True,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-        handle_parsing_errors=True,
-        iter = 5,
-        )
-    return agent_executor
+# @st.cache_resource
+# def python_agent():
+#     agent_executor = create_python_agent(
+#         llm=llm,
+#         tool=[python_repl],
+#         verbose=True,
+#         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+#         handle_parsing_errors=True,
+#         iter = 5,
+#         )
+#     return agent_executor
 
 # @st.cache_data
 # def python_solution(my_data_problem, selected_algorithm, user_csv):
