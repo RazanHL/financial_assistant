@@ -7,12 +7,10 @@ import re
 import numpy as np
 import pandas as pd
 import streamlit as st
-# import statsmodels.api as sm
-# from statsmodels.tsa.stattools import adfuller, acf, pacf
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from sklearn.metrics import mean_squared_error
+# from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+# from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
