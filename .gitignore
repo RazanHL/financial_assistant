@@ -16,7 +16,7 @@ scaler.save
 steps.txt
 stock_price_prediction_model.h5
 test.py
-
+requierments.txt
 
 # Distribution / packaging
 .Python
