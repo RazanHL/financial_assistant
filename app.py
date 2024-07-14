@@ -296,6 +296,8 @@ with tab3:
         with st.spinner('Plotting basic financial features ...'):
             fin_tools.basic_info(symbol)
         
+        st.subheader('Candlestick chart')
+        st.write('')
         with st.spinner('Plotting Candlestick Chart ...'):
             fin_tools.creat_candle_chart(symbol)
 
