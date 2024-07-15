@@ -175,15 +175,15 @@ zero_shot_agent=initialize_agent(
     return_intermediate_steps=True,
     handle_parsing_errors=True
 )
-agent_executor = create_conversational_retrieval_agent(llm, 
-                                                       tools ,
-                                                       remember_intermediate_steps=True,
-                                                       memory_key='chat_history' ,
-                                                       verbose=True)
+# agent_executor = create_conversational_retrieval_agent(llm, 
+#                                                        tools ,
+#                                                        remember_intermediate_steps=True,
+#                                                        memory_key='chat_history' ,
+#                                                        verbose=True)
 
-q = st.text_input('Add a question!')
-response = agent_executor.invoke({"input":q})
-st.write(response['output'])
+# q = st.text_input('Add a question!')
+# response = agent_executor.invoke({"input":q})
+# st.write(response['output'])
 
 
 st.divider()
@@ -284,7 +284,7 @@ with tab1:
                 resource = res['context'][0]
                 st.write(f'the resource is : {resource}')
                 st.session_state.requests.append(query)
-                st.session_state.responses.append(response)
+                # st.session_state.responses.append(response)
         # st.session_state.input = ""
         
 
@@ -357,7 +357,7 @@ with tab4:
     def get_trained_model(df):
         with st.spinner('Training special prediction model for this data may take up to 5 min..'):
             model, scaler, rmse, _ = fin_tools.build_train_lstm_model(df)
-            st.write(f'RMSE measure is: {rmse}')
+            # st.write(f'RMSE measure is: {rmse}')
         return model, scaler
     
     model, scaler = get_trained_model(df)
