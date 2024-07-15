@@ -6,7 +6,7 @@ import pandas as pd
 from langchain_huggingface import HuggingFaceEndpoint
 
 # from langchain.agents import create_react_agent
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 # from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
@@ -21,7 +21,7 @@ import fin_tools
 # from langchain.chains import LLMChain, SimpleSequentialChain, SequentialChain
 # from langchain_experimental.agents.agent_toolkits import create_python_agent
 # from langchain_experimental.tools import PythonREPLTool
-from langchain_experimental.utilities import PythonREPL
+# from langchain_experimental.utilities import PythonREPL
 
 # from langchain.agents.agent_types import AgentType
 
@@ -53,8 +53,8 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 
-load_dotenv()
-os.environ["HUGGINGFACEHUB_API_TOKkEN"] = st.secrets["HUGGINGFACEHUB_API_TOKkEN"] 
+# load_dotenv()
+# os.environ["HUGGINGFACEHUB_API_TOKkEN"] = st.secrets["HUGGINGFACEHUB_API_TOKkEN"] 
           
 st.header("Your Financial Assistance")
 st.subheader("General information about the dataset")
@@ -139,7 +139,7 @@ llm = HuggingFaceEndpoint(
     repo_id=repo_id,
     max_length=500,
     temperature=0.5,
-    huggingfacehub_api_token=os.environ["HUGGINGFACEHUB_API_TOKEN"],
+    huggingfacehub_api_token=st.secrets["HUGGINGFACEHUB_API_TOKEN"],
 )
 
 st.divider()
