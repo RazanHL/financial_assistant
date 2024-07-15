@@ -1,61 +1,35 @@
-# from streamlit.web import cli
 import streamlit as st
 import pandas as pd
-# from langchain.llms import HuggingFacePipeline
-
 from langchain_huggingface import HuggingFaceEndpoint
-
-# from langchain.agents import create_react_agent
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
-# from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-
-# from langchain.agents import AgentType, Tool, initialize_agent
-
-# from langchain_community.agent_toolkits.load_tools import load_tools
-
-# from datetime import datetime, timedelta
 import fin_tools
-
-# from langchain.prompts import PromptTemplate
-# from langchain.chains import LLMChain, SimpleSequentialChain, SequentialChain
-# from langchain_experimental.agents.agent_toolkits import create_python_agent
-# from langchain_experimental.tools import PythonREPLTool
-# from langchain_experimental.utilities import PythonREPL
-
-# from langchain.agents.agent_types import AgentType
-
+from langchain_experimental.utilities import PythonREPL
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
-
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-# from langchain.chains import ConversationalRetrievalChain
-# from langchain.chains import ConversationChain
-# from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain.prompts import (
-    # SystemMessagePromptTemplate,
-    # HumanMessagePromptTemplate,
     ChatPromptTemplate,
     MessagesPlaceholder
 )
-
+from langchain.agents import load_tools, AgentType, Tool, initialize_agent
 from streamlit_chat import message
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain.chains import create_history_aware_retriever
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 
 
 
 
-
-# load_dotenv()
-# os.environ["HUGGINGFACEHUB_API_TOKkEN"] = st.secrets["HUGGINGFACEHUB_API_TOKkEN"] 
-          
+load_dotenv()
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+           
 st.header("Your Financial Assistance")
 st.subheader("General information about the dataset")
 
@@ -139,8 +113,78 @@ llm = HuggingFaceEndpoint(
     repo_id=repo_id,
     max_length=500,
     temperature=0.5,
-    huggingfacehub_api_token=st.secrets["HUGGINGFACEHUB_API_TOKEN"],
+    huggingfacehub_api_token=os.environ["HUGGINGFACEHUB_API_TOKEN"],
 )
+# Making tool list
+
+tools=[
+    Tool(
+        name="get stock data",
+        func=fin_tools.get_recent_data,
+        description="Use when you are asked to evaluate or analyze a stock. This will output historic share price data. You should input the stock ticker to it "
+    ),
+    # Tool(
+    #     name="get stock price prediction",
+    #     func= get_trained_model,
+    #     description="Use when you are asked to predict the futur price of stock. This will output prediction model and a scaler, use them as input to the function 'fin_tools.predict_future_prices' to show the predicted price for the next ten days . You should input the output of the function 'get stock data' to it "
+    # ),
+    
+    Tool(
+        name="DuckDuckGo Search",
+        func=fin_tools.DuckDuck_search.run,
+        description="Use when you need to get stock ticker from internet, you can also get recent stock related news to have insights about market ."
+    ),
+    Tool(
+        name="get recent news",
+        func=fin_tools.get_recent_stock_news,
+        description="Use this to fetch recent news about stocks"
+    ),
+    Tool(
+        name="get financial statements",
+        func=fin_tools.get_financial_statements,
+        description="Use this to get financial statement of the company. With the help of this data companys historic performance can be evaluaated. You should input stock ticker to it"
+    )
+]
+
+# @st.cache_resource
+# def python_agent():
+#     agent_executor = initialize_agent(
+#         agent="zero-shot-react-description",
+#         llm=llm,
+#         tool=tools,
+#         verbose=True,
+#         return_intermediate_steps=True,
+#         handle_parsing_errors=True,
+#         max_iteration=4,
+#         )
+#     return agent_executor
+
+# @st.cache_data
+# def python_solution(my_data_problem, selected_algorithm, user_csv):
+#     solution = python_agent().run(
+#         f"Write a Python script to solve this: {my_data_problem}, using this algorithm: {selected_algorithm}, using this as your dataset: {user_csv}."
+#     )
+#     return solution
+
+zero_shot_agent=initialize_agent(
+    llm=llm,
+    agent="zero-shot-react-description",
+    tools=tools,
+    verbose=True,
+    max_iteration=4,
+    return_intermediate_steps=True,
+    handle_parsing_errors=True
+)
+agent_executor = create_conversational_retrieval_agent(llm, 
+                                                       tools ,
+                                                       remember_intermediate_steps=True,
+                                                       memory_key='chat_history' ,
+                                                       verbose=True)
+
+q = st.text_input('Add a question!')
+response = agent_executor.invoke({"input":q})
+st.write(response['output'])
+
 
 st.divider()
 tab1, tab2, tab3, tab4 = st.tabs(["Financial Assistant", "ChatBot", "General overview", "Predictors"])
@@ -284,8 +328,7 @@ with tab2:
 
 with tab3:
     st.header('Recent Financial Data')
-    data = pd.read_csv('companies_full_financial_data.csv')
-    # st.write(llm.invoke('stock price in 2025 of Meta ')) #, kwargs={'max_lenght': 3})
+    # data = pd.read_csv('companies_full_financial_data.csv')
 
     comp_name = pd.read_csv('companies_stock_names.csv')
     company_name = st.selectbox('Select a company', comp_name['name'])
@@ -296,8 +339,6 @@ with tab3:
         with st.spinner('Plotting basic financial features ...'):
             fin_tools.basic_info(symbol)
         
-        st.subheader('Candlestick chart')
-        st.write('')
         with st.spinner('Plotting Candlestick Chart ...'):
             fin_tools.creat_candle_chart(symbol)
 
@@ -307,12 +348,19 @@ with tab4:
     with st.spinner('In progress ...'):
         fin_tools.arima_forcasting_close(symbol)
 
-    st.subheader('**LSTM model Prediction:**')
-    
-    
+    st.subheader('**LSTM model Prediction:**')    
     df = fin_tools.get_recent_data(symbol)
-    with st.spinner('Training special prediction model for this data may take up to 5 min..'):
-        model, scaler, rmse, _ = fin_tools.build_train_lstm_model(df)
+
+
+
+    @st.cache_resource
+    def get_trained_model(df):
+        with st.spinner('Training special prediction model for this data may take up to 5 min..'):
+            model, scaler, rmse, _ = fin_tools.build_train_lstm_model(df)
+            st.write(f'RMSE measure is: {rmse}')
+        return model, scaler
+    
+    model, scaler = get_trained_model(df)
 
     st.write('**How many days do you want to predict the price for?**')
     days = st.text_input('Number of Days')
@@ -323,79 +371,16 @@ with tab4:
 
     with st.spinner('Predictind Futher stock price ..'):
             fin_tools.predict_future_prices(model, df, scaler, days=d)
-    
-# Making tool list
-
-# tools=[
-#     # Tool(
-#     #     name="get stock price prediction",
-#     #     func=fin_tools.predict_stock_prices,
-#     #     description="Use when you are asked to predict the price of stock. This will output predicted stock price. You should input the company name to it "
-#     # ),
-#     Tool(
-#         name="get stock data",
-#         func=fin_tools.get_recent_data,
-#         description="Use when you are asked to evaluate or analyze a stock. This will output historic share price data. You should input the stock ticker to it "
-#     ),
-#     Tool(
-#         name="DuckDuckGo Search",
-#         func=fin_tools.DuckDuck_search.run,
-#         description="Use only when you need to get NSE/BSE stock ticker from internet, you can also get recent stock related news. Dont use it for any other analysis or task"
-#     ),
-#     Tool(
-#         name="get recent news",
-#         func=fin_tools.get_recent_stock_news,
-#         description="Use this to fetch recent news about stocks"
-#     ),
-
-#     # Tool(
-#     #     name="get financial statements",
-#     #     func=fin_tools.get_financial_statements,
-#     #     description="Use this to get financial statement of the company. With the help of this data companys historic performance can be evaluaated. You should input stock ticker to it"
-#     # )
 
 
-# ]
-
-# python_repl = PythonREPL()
-
-# @st.cache_resource
-# def python_agent():
-#     agent_executor = create_python_agent(
-#         llm=llm,
-#         tool=[python_repl],
-#         verbose=True,
-#         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-#         handle_parsing_errors=True,
-#         iter = 5,
-#         )
-#     return agent_executor
-
-# @st.cache_data
-# def python_solution(my_data_problem, selected_algorithm, user_csv):
-#     solution = python_agent().run(
-#         f"Write a Python script to solve this: {my_data_problem}, using this algorithm: {selected_algorithm}, using this as your dataset: {user_csv}."
-#     )
-#     return solution
-
-
-
-
-# df = fin_tools.predict_future_prices(model, data, scaler, days=100)
-# st.write(python_solution('predict the stock price in 2030 using LSTM', 'LSTM', df))
-
-
-# zero_shot_agent=initialize_agent(
-#     llm=llm,
-#     agent="zero-shot-react-description",
-#     tools=tools,
-#     verbose=True,
-#     max_iteration=4,
-#     return_intermediate_steps=True,
-#     handle_parsing_errors=True
-# )
-
-# response = zero_shot_agent({"input":"Shall I invest in GOOG?"})
+# output_parser=output_parser
+# agent_executor = create_conversational_retrieval_agent(llm, 
+#                                                        tools ,
+#                                                        remember_intermediate_steps=True,
+#                                                        memory_key='memo' ,
+#                                                        verbose=True)
+# result = agent_executor.invoke({"input": input})
+# print(result['output'])
 # query = st.chat_input('input something!')
 
 # response =llm(st
@@ -403,8 +388,119 @@ with tab4:
 
 # st.write(response)
 
+# llm_math_chain = LLMMathChain.from_llm(llm=llm, verbose=True)
 
-# st.is_clicked = st.button('click ok')
-# if __name__ == "__main__":
-#     cli.main_run(["app.py"])
-    # cli.main_run(["app.py", "--server.port", "1000"])
+# conversational_memory = ConversationBufferWindowMemory(
+#     memory_key='chat_history',
+#     k=50,
+#     return_messages=True,
+#     input_key="question", 
+#     output_key='output'
+# )
+
+# # load will vector db
+# relevant_parts = []
+# for p in Path(".").absolute().parts:
+#     relevant_parts.append(p)
+#     if relevant_parts[-3:] == ["langchain", "docs", "modules"]:
+#         break
+        
+
+
+
+# def get_meta(data:str):
+#     split_data = [item.split(":") for item in data.split("\n")]
+
+#     # Creating a dictionary from the split data
+#     result = {}
+#     for item in split_data:
+#         if len(item) > 1:
+#             key = item[0].strip()
+#             value = item[1].strip()
+#             result[key] = value
+
+#     # Converting the dictionary to JSON format
+#     json_data = json.dumps(result)
+#     return json_data
+    
+    
+# template = """You're an customer care representative
+ 
+# You have the following products in your store based on the customer question. Answer politely to customer questions on any questions on product sold in the wesbite and provide product details. Send the product webpage links for each recommendation
+
+# {context}
+
+# "chat_history": {chat_history}
+
+# Question: {question}
+# Answer:"""
+ 
+
+# products_path = "ecommerce__20200101_20200131__10k_data_10.csv"
+
+
+# loader = CSVLoader(products_path, csv_args={
+#     'delimiter': ',',
+#     'quotechar': '"',
+# })
+
+# documents = loader.load()
+
+# text_splitter = RecursiveCharacterTextSplitter(chunk_size=4000, chunk_overlap=0, length_function = len)
+# sources = text_splitter.split_documents(documents)
+# source_chunks = []
+# splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=100, length_function = len)
+
+# for source in sources:
+#     for chunk in splitter.split_text(source.page_content):
+#         chunk_metadata = json_meta = json.loads(get_meta(chunk))
+#         source_chunks.append(Document(page_content=chunk, metadata=chunk_metadata))
+
+# embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key, model="ada")
+
+# products_db = Chroma.from_documents(source_chunks, embeddings, collection_name="products")
+
+# prompt = PromptTemplate(template=template, input_variables=["context", "question", "chat_history"])
+
+# product_inquery_agent = RetrievalQA.from_chain_type(
+#     llm=llm,
+#     chain_type="stuff",
+#     retriever=products_db.as_retriever(search_kwargs={"k": 4}),
+#     chain_type_kwargs = {"prompt": prompt, "verbose": True, "memory": conversational_memory},
+# )
+
+
+# tools = [
+#     Tool(
+#         name="Product inquiries System",
+#         func=product_inquery_agent.run,
+#         description="useful for getting information about products, features, and specifications to make informed purchase decisions. Input should be a fully formed question.",
+#         return_direct=True,
+#     ),
+# ]
+
+
+
+
+# prefix = """Have a conversation with a human as a customer representative agent, answering the following questions as best you can in a polite and friendly manner. You have access to the following tools:"""
+# suffix = """Begin!"
+
+# {chat_history}
+# Question: {input}
+# {agent_scratchpad}"""
+
+# prompt = ZeroShotAgent.create_prompt(
+#     tools,
+#     prefix=prefix,
+#     suffix=suffix,
+#     input_variables=["input", "chat_history", "agent_scratchpad"],
+# )
+# llm_chain = LLMChain(llm=OpenAI(temperature=0, openai_api_key=openai_api_key), prompt=prompt)
+
+# agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools, verbose=True)
+# agent_chain = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True, memory=conversational_memory)
+
+
+#  ssh-keygen -t rsa -b 4096 -C streamlitapppublickey
+#  ssh-keygen -t rsa -b 4096 -C streamlitapplocal
+#  

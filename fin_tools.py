@@ -20,6 +20,7 @@ import plotly.graph_objects as go
 
 
 # Get the ticker name
+@st.cache_resource
 def get_stock(ticker):
     try:
       stock = yf.Ticker(ticker)
@@ -31,6 +32,7 @@ def get_stock(ticker):
     return stock
 
 # Fetch stock data from Yahoo Finance
+@st.cache_data
 def get_recent_data(ticker, period='5y'):
 
     stock = get_stock(ticker)
@@ -40,6 +42,14 @@ def get_recent_data(ticker, period='5y'):
     # data.index.rename("Date",inplace=True)
     return latest_data #data
 
+def get_financial_statements(ticker):
+    stock = get_stock(ticker)
+    cashflow = stock.cashflow
+    balance_sheet = stock.balance_sheet
+    finance = stock.financials
+    return (cashflow, balance_sheet, finance)
+
+@st.cache_data
 def basic_info(symbol):
     stock_data = get_recent_data(symbol)
     col1, col2 = st.columns(2)
@@ -114,21 +124,7 @@ def basic_info(symbol):
     return
 
 #valid period = 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
-
-
-# def get_stock_price(ticker,history=360):
-    
-#     stock = get_stock(ticker)
-#     df = stock.history(period="max")
-#     df=df[["Close","Volume"]]
-#     df.index=[str(x).split()[0] for x in list(df.index)]
-#     df.index.rename("Date",inplace=True)
-#     df=df[-history:]
-
-#     return df #.to_string()
-
-# Script to scrap top5 googgle news for given company name
-
+@st.cache_data
 def creat_candle_chart(ticker):
     df = get_recent_data(ticker)
     fig = go.Figure(data=[go.Candlestick(x=df.index,
@@ -178,7 +174,7 @@ DuckDuck_search=DuckDuckGoSearchRun()
 import math
 
 # CLose price forcasting
-@st.cache_resource
+@st.cache_data
 def arima_forcasting_close(ticker):
     # data = yf.download(ticker, start='2020-01-01', end='2024-07-01')
     data = get_recent_data(ticker)
@@ -216,12 +212,12 @@ def arima_forcasting_close(ticker):
 
     return forecast_df[-1:]
 
-
-def preprocess_data(data, sequence_length=60):
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(data.values.reshape(-1, 1))
-
+# @st.cache_resource
+def preprocess_data(scaled_data):
+    # scaled_data = scaler.transform(data.values) #.reshape(-1, 1))
+ 
     x, y = [], []
+    sequence_length=60
     for i in range(sequence_length, len(scaled_data)):
         x.append(scaled_data[i-sequence_length:i, 0])
         y.append(scaled_data[i, 0])
@@ -229,25 +225,27 @@ def preprocess_data(data, sequence_length=60):
     x, y = np.array(x), np.array(y)
     x = np.reshape(x, (x.shape[0], x.shape[1], 1))
 
-    return x, y, scaler
+    return x, y
 
-@st.cache_resource
+# @st.cache_resource
 def build_train_lstm_model(data, sequence_length=60):
     # data = get_recent_data(ticker)
     data = data[['Close']]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaled_data = scaler.fit_transform(data.values)
 
-    train_size = int(len(data) * 0.8)
-    train_data = data[:train_size]
-    test_data = data[train_size:]
+    train_size = int(len(scaled_data) * 0.8)
+    train_data = scaled_data[:train_size]
+    test_data = scaled_data[train_size-60:]
 
-    x_train, y_train, scaler = preprocess_data(train_data, sequence_length)
-    x_test, y_test, _ = preprocess_data(test_data, sequence_length)
+    x_train, y_train = preprocess_data(train_data)
+    x_test, y_test = preprocess_data(test_data)
 
     model = Sequential()
     model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-    model.add(Dropout(0.4))
+    # model.add(Dropout(0.7))
     model.add(LSTM(units=50, return_sequences=False))
-    model.add(Dropout(0.4))
+    # model.add(Dropout(0.7))
     model.add(Dense(units=25))
     model.add(Dense(units=1))
 
@@ -255,7 +253,7 @@ def build_train_lstm_model(data, sequence_length=60):
     # data = fetch_stock_data(ticker, start_date, end_date)
 
     # model = build_lstm_model((x_train.shape[1], 1))
-    model.fit(x_train, y_train, epochs=50, batch_size=32)
+    model.fit(x_train, y_train, epochs=1, batch_size=1)
 
     predictions = model.predict(x_test)
     predictions = scaler.inverse_transform(predictions)
@@ -269,8 +267,9 @@ def predict_next_stock_price(data, model, scaler, sequence_length=60):
     # data = get_recent_data(ticker)
     data = data[["Close"]] # fetch_stock_data(ticker, start_date, end_date)
     test_data = data[-100:]
+    scaled_data = scaler.transform(test_data.values)
 
-    x_test, y_test, _ = preprocess_data(test_data, sequence_length)
+    x_test, y_test = preprocess_data(scaled_data)
 
     predictions = model.predict(x_test)
     predictions = scaler.inverse_transform(predictions)
@@ -279,6 +278,7 @@ def predict_next_stock_price(data, model, scaler, sequence_length=60):
 
     return predictions[-1][0]
 
+# @st.cache_data
 def predict_future_prices(model, data, scaler, days=10):
     data = data[['Close']]
     last_index = data.index[-1]
