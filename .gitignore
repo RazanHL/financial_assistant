@@ -9,7 +9,6 @@ __pycache__/
 
 # files
 appCopy.py
-companies_full_financial_data.csv
 fin_toolsCopy.py
 imputed_full_financial_data.csv
 scaler.save
